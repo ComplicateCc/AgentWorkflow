@@ -1,3 +1,3 @@
 for i = 1,5 do
-    printa(i)
+    print(i)
 end
