@@ -13,14 +13,17 @@ docs = loader.load()
 # 根据URL排序列表并获取文本
 d_sorted = sorted(docs, key=lambda x: x.metadata["source"])
 d_reversed = list(reversed(d_sorted))
-concatenated_content = "\n\n\n --- \n\n\n".join(
-    [doc.page_content for doc in d_reversed]
-)
+# concatenated_content = "\n\n\n --- \n\n\n".join(
+#     [doc.page_content for doc in d_reversed]
+# )
+
+concatenated_content = ""
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+import os
 
 # 加载.env文件中的环境变量
 load_dotenv()
@@ -28,7 +31,7 @@ load_dotenv()
 api_key = os.getenv('Deepseek_API_Key')
 api_url = os.getenv('Deepseek_API_URL')
 default_model = os.getenv('Deepseek_Default_Model')
-
+auth_token = os.getenv('ANTHROPIC_AUTH_TOKEN')
 
 ### OpenAI
 
@@ -49,7 +52,7 @@ code_gen_prompt = ChatPromptTemplate.from_messages(
 
 # 数据模型
 class code(BaseModel):
-    """关于LCEL问题的代码解决方案的模式。"""
+    """关于LCEL问题的代码解决方案的Schema"""
 
     prefix: str = Field(description="问题和方法的描述")
     imports: str = Field(description="代码块的import语句")
@@ -62,7 +65,7 @@ solution = code_gen_chain_oai.invoke(
     {"context": concatenated_content, "messages": [("user", question)]}
 )
 solution
-
+# print(concatenated_content)
 
 
 pass
@@ -105,11 +108,11 @@ client = openai.OpenAI(
 )
 
 # LLM
-expt_llm = "claude-3-opus-20240229"
-llm = ChatAnthropic(
-    model=expt_llm,
-    default_headers={"anthropic-beta": "tools-2024-04-04"},
-)
+# expt_llm = "claude-3-opus-20240229"
+# llm = ChatAnthropic(
+#     model=expt_llm,
+#     default_headers={"anthropic-beta": "tools-2024-04-04"},
+# )
 
 structured_llm_claude = llm.with_structured_output(code, include_raw=True)
 
