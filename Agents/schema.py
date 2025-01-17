@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import TypedDict
-
+from pydantic import BaseModel
 
 ### State部分
 class State(TypedDict):
@@ -14,7 +14,16 @@ class State(TypedDict):
     history: 历史记录
     """
     ori_prompt: str
+    code_reference: str
     step_index: int
     steps_msg : list
     steps_response: list
     history: list
+    
+class CodeGenerationResponse(BaseModel):
+    generated_code: str
+    
+
+class CodeReviewResponse(BaseModel):
+    review_result: bool
+    review_advice: str

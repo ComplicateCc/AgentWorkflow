@@ -19,7 +19,7 @@ class ChatModelFactory:
 
     @classmethod
     def get_model(cls, model_name: str, use_azure: bool = False):
-        if model_name == "DeepSeek":
+        if model_name == "DeepSeek" or model_name == "deepseek":
             # 开源模型替换
             # DeepSeek-V3-Base
             return ChatOpenAI(
