@@ -19,16 +19,7 @@ class ChatModelFactory:
 
     @classmethod
     def get_model(cls, model_name: str, use_azure: bool = False):
-        if "gpt" in model_name:
-            if not use_azure:
-                return ChatOpenAI(model=model_name, **cls.model_params)
-            else:
-                return AzureChatOpenAI(
-                    azure_deployment=model_name,
-                    api_version="2024-05-01-preview",
-                    **cls.model_params
-                )
-        elif model_name == "DeepSeek":
+        if model_name == "DeepSeek":
             # 开源模型替换
             # DeepSeek-V3-Base
             return ChatOpenAI(
@@ -37,6 +28,15 @@ class ChatModelFactory:
                 openai_api_base= deepseek_api_url,  # 平台 API 地址
                 **cls.model_params,
             )
+        elif "gpt" in model_name:
+            if not use_azure:
+                return ChatOpenAI(model=model_name, **cls.model_params)
+            else:
+                return AzureChatOpenAI(
+                    azure_deployment=model_name,
+                    api_version="2024-05-01-preview",
+                    **cls.model_params,
+                )
 
     @classmethod
     def get_default_model(cls):

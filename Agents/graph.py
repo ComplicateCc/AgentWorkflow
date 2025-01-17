@@ -34,12 +34,29 @@ workflow.add_conditional_edges(
         "generate": "代码生成模块",
     },
 )
+workflow.add_edge("代码生成审查模块", "代码生成模块")
 workflow.add_edge("结束前模块", END)
 app = workflow.compile()
 
 # app.get_graph().draw_mermaid_png(output_file_path="1.png")
 print(app.get_graph())
-# # 绘制流程图
+# 绘制流程图
 # from mermaid import Mermaid
 # Mermaid(app.get_graph().draw_mermaid())
 
+# try:
+#     app.get_graph().draw_mermaid_png(output_file_path="1.png")
+# except ValueError as e:
+#     print(f"Error occurred: {e}")
+
+# def draw_mermaid_png(output_file_path):
+#     import subprocess
+#     # 保存 Mermaid 图定义到文件
+#     mermaid_definition = app.get_graph().draw_mermaid()
+#     with open('graph_definition.mmd', 'w') as f:
+#         f.write(mermaid_definition)
+#     # 使用 Mermaid CLI 生成 PNG 图像
+#     subprocess.run(['mmdc', '-i', 'graph_definition.mmd', '-o', output_file_path], check=True)
+#     print("Mermaid graph has been generated as 1.png")
+
+# draw_mermaid_png("1.png")

@@ -4,7 +4,9 @@ main_promt = """
 你是一个经验丰富的游戏开发者，擅长Lua编程语言，可以使用工具与指令自动化解决问题。
 
 你的任务是：
-{input}
+<task>
+{base_task}
+</task>
 
 你需要的所有文件资料都在以下目录:
 dir_path={work_dir}
@@ -34,3 +36,17 @@ error_code_prompt = """
 
 """
 
+planning_prompt = """
+
+"""
+
+base_tast_prompt = """
+你需要用Lua实现，读取用户写入内容，创建一个新文档并保存，最后读取文件内容并打印文件大小。
+
+你可以参考的代码如下：
+<reference>
+{reference_content}
+</reference>
+
+如果参考文档中有的代码逻辑，直接应用，不要新建方法
+"""

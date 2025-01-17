@@ -1,13 +1,59 @@
 import os
-from config import max_iterations, use_reflect
+# import sys
+# sys.path.append('G:/Project/AgentWorkflow')
+from Models.Factory import ChatModelFactory
+from config import max_iterations, use_reflect, use_code_testing
 from schema import State
+from prompts import *
+import subprocess
+
+### State部分
+# class State(TypedDict):
+#     """
+#     Graph的状态结构
+    
+#     ori_prompt: 原始的prompt
+#     step_index: 步骤索引
+#     steps_msg: 步骤信息
+#     steps_response: 步骤回复
+#     history: 历史记录
+#     """
+#     ori_prompt: str
+#     step_index: int
+#     steps_msg : list
+#     steps_response: list
+#     history: list
 
 def compose_promt(state:State):
+    prompt = state["ori_prompt"]
+    agent_scratchpad = state["history"]
+    base_task = base_tast_prompt
+    
+    llm = ChatModelFactory.get_model("deepseek")
+    file_path = "./Datas"
+    #读取file_path路径下的所有文件 并整合成字符串
+    with open(file_path, 'r', encoding='utf-8') as f:
+        reference_content = f.read()
+    print(reference_content)
     
     pass
 
 
-import subprocess
+# 以下是你的其他代码逻辑
+def main():
+    compose_promt(
+        {
+            "ori_prompt":"请编写一个函数，实现一个简单的任务系统",
+            "step_index":0,
+            "steps_msg":[],
+            "steps_response":[],
+            "history":[]
+        }
+    )
+
+if __name__ == "__main__":
+    main()
+
 
 def check_lua_compilability(lua_code):
     # 定义一个临时文件来存储 Lua 代码
