@@ -12,13 +12,17 @@ class State(TypedDict):
     steps_msg: 步骤信息
     steps_response: 步骤回复
     history: 历史记录
+    review_result: 代码审查结果
+    review_advice: 代码审查建议
     """
     ori_prompt: str
     code_reference: str
     step_index: int
     steps_msg : list
     steps_response: list
-    history: list
+    review_result: bool
+    review_advice: str
+    generated_code: str
     
 class CodeGenerationResponse(BaseModel):
     generated_code: str

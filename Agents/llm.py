@@ -4,6 +4,7 @@ import os
 import openai
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+from config import *
 
 ### 环境部分
 # 加载.env文件中的环境变量
@@ -21,4 +22,7 @@ client = openai.OpenAI(
     base_url=api_url
 )
 
-llm = ChatOpenAI(model="deepseek-chat", api_key=api_key, base_url=api_url)
+llm = ChatOpenAI(model="deepseek-chat", 
+                 api_key=api_key, 
+                 base_url=api_url,
+                 max_tokens = max_tokens)

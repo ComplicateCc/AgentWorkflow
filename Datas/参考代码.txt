@@ -1,1 +1,709 @@
-==============================
+<SampleCode>
+以下是一个游戏功能的脚本，是按照框架的规范进行书写
+--Name:[魔域][活动任务]24年感恩节剧情副本
+--Purpose:      活动任务
+--Creator:      林多娜 
+--Created:      2024-01-22
+--Modifier:     $Author: 
+--Modified:     $Date: 
+--RCS-ID:       $$Revision:  $$
+--===========================================================================
+-- region 常量配置
+local ud_nCarryId = 714
+local tActivityBeginTime =   {year = 2024,month = 11,day = 28,hour =  7,min = 30,sec =  0}
+--活动结束时间  非先锋
+local tActivityEndTime =     {year = 2024,month = 12,day = 1,hour = 23,min = 59,sec = 59}
+local sBeginDate = "11月28日"
+local sEndDate =   "12月1日"
+
+
+--先锋时间
+if rwIsXianFeng then
+    tActivityBeginTime =   {year = 2024,month = 11,day = 25,hour =  7,min = 30,sec =  0}
+    tActivityEndTime =     {year = 2024,month = 11,day = 28,hour = 23,min = 59,sec = 59}
+    sBeginDate = "11月25日"
+    sEndDate =   "11月28日"
+end
+local nActivityBeginTime = os.time(tActivityBeginTime)
+local nActivityEndTime = os.time(tActivityEndTime)
+
+local tPosInfoGroup = {
+    ["GainBuffPos"] = { --增益buff点
+        --加速点
+        {nPosX = 150 ,nPosY = 174,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},
+        {nPosX = 160 ,nPosY = 168,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},        {nPosX = 152 ,nPosY = 129,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},
+        {nPosX = 140 ,nPosY = 128,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},
+        {nPosX = 101 ,nPosY = 125,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},        {nPosX = 91 , nPosY = 113,nMonType = 55289,nBuffNameNpc = 39647,nLev = 1,sTips = "恩护之鼓的鼓点使你振奋。",},
+    },
+}
+
+-- 控场透明怪
+local nCtrolMonId = 55287
+local nMontherId = 12188
+rwtTaskData.task_44069 = 44069
+rwtTaskData.task_44070 = 44070
+rwtTaskData.task_41150 = 41150
+rwtTaskData.task_48700 = 48700
+local nAwardTaskId = rwtTaskData.task_48700
+local nPanelTask1 = 42065
+local nPanelTask2 = 9481
+-- endregion
+
+
+-- region npc
+
+-- 锟斤拷锟斤拷DialogueSystem模锟斤拷
+G_NpcConfig[39645] = {}
+G_NpcConfig[39645]["Name"] = "起始路标"
+G_NpcConfig[39645]["Look"] = 10000
+G_NpcConfig[39645]["Dialog"] = {}
+G_NpcConfig[39645]["Dialog"][1] = {}
+G_NpcConfig[39645]["Dialog"][1]["DialogId"] = 1
+G_NpcConfig[39645]["Dialog"][1]["MainText"] = "已经开始登山"
+G_NpcConfig[39645]["Dialog"][1]["DialogType"] = 1
+G_NpcConfig[39645]["Dialog"][1]["Condition"] = {}
+G_NpcConfig[39645]["Dialog"][1]["Condition"]["Type"] = CONDITION_TYPE.SYSTEM_ATTR
+G_NpcConfig[39645]["Dialog"][1]["Condition"]["info"] = {}
+G_NpcConfig[39645]["Dialog"][1]["Condition"]["info"]["index"] = 17
+G_NpcConfig[39645]["Dialog"][1]["Condition"]["compareType"] = COMPARE_TYPE.EQUAL
+G_NpcConfig[39645]["Dialog"][1]["Condition"]["targetValue"] = 2
+
+G_NpcConfig[39645]["Dialog"][1]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][1]["Option"][1] = {}
+G_NpcConfig[39645]["Dialog"][1]["Option"][1]["Text"] = "我想回到卡诺萨城。"
+G_NpcConfig[39645]["Dialog"][1]["Option"][1]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][1]["Option"][1]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][1]["Option"][1]["Node"][1]["NodeType"] = DialogNodeType.TURN
+G_NpcConfig[39645]["Dialog"][1]["Option"][1]["Node"][1]["TurnDialog"]= 4
+G_NpcConfig[39645]["Dialog"][1]["Option"][2] = {}
+G_NpcConfig[39645]["Dialog"][1]["Option"][2]["Text"] = "离开。"
+
+G_NpcConfig[39645]["Dialog"][2] = {}
+G_NpcConfig[39645]["Dialog"][2]["DialogId"] = 2
+G_NpcConfig[39645]["Dialog"][2]["MainText"] = "警告！前方便是哥布林部落的领地，哥布林们世代守护着恩护之鼓，凶险无比！"
+G_NpcConfig[39645]["Dialog"][2]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Text"] = "确定进入。"
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"]["Type"] = CONDITION_TYPE.SYSTEM_ATTR
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"]["info"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"]["info"]["index"] = 12
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"]["compareType"] = COMPARE_TYPE.EQUAL
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Condition"]["targetValue"] = 0
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"]["info"]["funcType"] = "setCopyMapData"
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"]["info"]["index"] = 12
+G_NpcConfig[39645]["Dialog"][2]["Option"][1]["Node"][1]["Award"]["info"]["data"] = 1
+
+G_NpcConfig[39645]["Dialog"][2]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][2] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][2]["Text"] = "规则介绍。"
+G_NpcConfig[39645]["Dialog"][2]["Option"][2]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][2]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][2]["Node"][1]["NodeType"] = DialogNodeType.TURN
+G_NpcConfig[39645]["Dialog"][2]["Option"][2]["Node"][1]["TurnDialog"]= 3
+
+
+G_NpcConfig[39645]["Dialog"][2]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Text"] = "回到卡诺萨城。"
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["info"]["funcType"] = "changeMap"
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["info"]["mapId"] = 1000
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["info"]["posX"] = 252
+G_NpcConfig[39645]["Dialog"][2]["Option"][3]["Node"][1]["Award"]["info"]["posY"] = 474
+
+G_NpcConfig[39645]["Dialog"][4] = {}
+G_NpcConfig[39645]["Dialog"][4]["DialogId"] = 4
+G_NpcConfig[39645]["Dialog"][4]["MainText"] = "你确定要离开这里回到卡诺萨城吗？"
+G_NpcConfig[39645]["Dialog"][4]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Text"] = "是的，我要回到卡诺萨城。"
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["info"]["funcType"] = "changeMap"
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["info"]["mapId"] = 1000
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["info"]["posX"] = 252
+G_NpcConfig[39645]["Dialog"][4]["Option"][1]["Node"][1]["Award"]["info"]["posY"] = 474
+
+G_NpcConfig[39645]["Dialog"][4]["Option"][2] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][2]["Text"] = "我想了解一下其他事情。"
+G_NpcConfig[39645]["Dialog"][4]["Option"][2]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][2]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][2]["Node"][1]["NodeType"] = DialogNodeType.TURN
+G_NpcConfig[39645]["Dialog"][4]["Option"][2]["Node"][1]["TurnDialog"]= 1
+G_NpcConfig[39645]["Dialog"][4]["Option"][3] = {}
+G_NpcConfig[39645]["Dialog"][4]["Option"][3]["Text"] = "还是算了。"
+
+G_NpcConfig[39645]["Dialog"][3] = {}
+G_NpcConfig[39645]["Dialog"][3]["DialogId"] = 3
+G_NpcConfig[39645]["Dialog"][3]["MainText"] = "开始挑战后，骑乘载具前进，击退路径上的敌人，跟随鼓点还可触发加速！抵达终点后，与首领战斗，将其击败，即可取回恩护之鼓，并收获奖励。"..
+    "注：首领将在血量降低至50%时呼叫增援，需优先阻止增援敲击恩护之鼓，以免首领得到强化！"
+G_NpcConfig[39645]["Dialog"][3]["Option"] = {}
+G_NpcConfig[39645]["Dialog"][3]["Option"][1] = {}
+G_NpcConfig[39645]["Dialog"][3]["Option"][1]["Text"] = "返回上一层。"
+G_NpcConfig[39645]["Dialog"][3]["Option"][1]["Node"] = {}
+G_NpcConfig[39645]["Dialog"][3]["Option"][1]["Node"][1] = {}
+G_NpcConfig[39645]["Dialog"][3]["Option"][1]["Node"][1]["NodeType"] = DialogNodeType.TURN
+G_NpcConfig[39645]["Dialog"][3]["Option"][1]["Node"][1]["TurnDialog"] = 1
+G_NpcConfig[39645]["Dialog"][3]["Option"][2] = {}
+G_NpcConfig[39645]["Dialog"][3]["Option"][2]["Text"] = "关闭。"
+
+
+G_NpcConfig[38144] = {}
+G_NpcConfig[38144]["Name"] = "离场"
+G_NpcConfig[38144]["Look"] = 10000
+G_NpcConfig[38144]["Dialog"] = {}
+G_NpcConfig[38144]["Dialog"][1] = {}
+G_NpcConfig[38144]["Dialog"][1]["DialogId"] = 1
+G_NpcConfig[38144]["Dialog"][1]["MainText"] = "你要去哪里？"
+G_NpcConfig[38144]["Dialog"][1]["DialogType"] = 1
+G_NpcConfig[38144]["Dialog"][1]["Option"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Text"] = "返回鸣天神庙遗址。"
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["NodeType"] = DialogNodeType.AWARD
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["funcType"] = "findWay"
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["posX"] = 332
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["posY"] = 306
+G_NpcConfig[38144]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["npcId"] = 52488
+
+G_NpcConfig[38144]["Dialog"][1]["Option"][2] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Text"] = "回到卡诺萨城。"
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1]["Award"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.TASK
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1]["Award"]["info"]["action"] = "removeTask"
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][1]["Award"]["info"]["TaskId"] = rwtTaskData.task_44069
+
+
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["info"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["info"]["funcType"] = "changeMap"
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["info"]["mapId"] = 1000
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["info"]["posX"] = 694
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][2]["Award"]["info"]["posY"] = 1021
+
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][3] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][3]["Award"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][3]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][3]["Award"]["info"] = {}
+G_NpcConfig[38144]["Dialog"][1]["Option"][2]["Node"][3]["Award"]["info"]["funcType"] = "delCopyMap"
+
+G_NpcConfig[38143] = {}
+G_NpcConfig[38143]["Name"] = "入场"
+G_NpcConfig[38143]["Look"] = 10000
+G_NpcConfig[38143]["Dialog"] = {}
+G_NpcConfig[38143]["Dialog"][1] = {}
+G_NpcConfig[38143]["Dialog"][1]["DialogId"] = 1
+G_NpcConfig[38143]["Dialog"][1]["MainText"] = "这片叶子将送你至哥布林领地，那里哥布林遍布，十分危险。/n（奖励：恩护币、感恩节日徽章包）"
+G_NpcConfig[38143]["Dialog"][1]["DialogType"] = 1
+G_NpcConfig[38143]["Dialog"][1]["Option"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Text"] = "前往领地。"
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["NodeType"] = DialogNodeType.AWARD
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["funcType"] = "createCopyMapData"
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["copymapid"] = 1850
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["existTime"] = 3600
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["posX"] = 400
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["posY"] = 275
+
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2]["Award"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2]["Award"]["info"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2]["Award"]["info"]["funcType"] = "addEffect"
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][2]["Award"]["info"]["effectName"] = "chaos_ap"
+
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3]["Award"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3]["Award"]["AwardType"] = AWARD_TYPE.TASK
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3]["Award"]["info"] = {}
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3]["Award"]["info"]["action"] = "removeTask"
+G_NpcConfig[38143]["Dialog"][1]["Option"][1]["Node"][3]["Award"]["info"]["TaskId"] = rwtTaskData.task_44069
+
+G_NpcConfig[38002] = {}
+G_NpcConfig[38002]["Name"] = "宝箱"
+G_NpcConfig[38002]["Look"] = 10000
+G_NpcConfig[38002]["Dialog"] = {}
+G_NpcConfig[38002]["Dialog"][1] = {}
+G_NpcConfig[38002]["Dialog"][1]["DialogId"] = 1
+G_NpcConfig[38002]["Dialog"][1]["MainText"] = "恭喜你通关了哥布林领地，可取走此处丰厚的宝物。"
+G_NpcConfig[38002]["Dialog"][1]["DialogType"] = 1
+G_NpcConfig[38002]["Dialog"][1]["Option"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Text"] = "领取奖励。"
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["NodeType"] = DialogNodeType.AWARD
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Logic"] = "AND"
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1]["Type"] = CONDITION_TYPE.TASK
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1]["DataIndex"] = 1
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1]["DataValue"] = 4
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1]["TaskId"] = rwtTaskData.task_44069
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][1]["compareType"] = COMPARE_TYPE.EQUAL
+
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2] = {}
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2]["Type"] = CONDITION_TYPE.TASK
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2]["checkType"] = FUNCTION_CHECK_TYPE.ACTIVITY_ACCESS
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2]["showTips"] = true
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2]["compareType"] = COMPARE_TYPE.EQUAL
+-- G_NpcConfig[39233]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["Condition"]["Conditions"][2]["targetValue"] = 1
+
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["AwardType"] = AWARD_TYPE.ITEM
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"] = {}
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["nItemTypeId"] = 729014
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["nAmount"] = 1
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["sGiftChk"] = "赠"
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["nActiveTime"] = 0
+G_NpcConfig[38002]["Dialog"][1]["Option"][1]["Node"][1]["Award"]["info"]["nFlag"] = 3
+--endregion
+---region monsterdrop
+rwtMonsterDrop[1000] = {}
+rwtMonsterDrop[1000]["DropFunC"] = function(nMonsterId, nMonsterType, nUserId)
+    SysTalkForLua("DropFunC")
+    local params = {
+        AwardType = AWARD_TYPE.TASK,
+        info = {
+            action = "autoTaskValue",
+            TaskId = rwtTaskData.task_44069,
+        }
+    }
+    params.roleId = nUserId
+    local awardTask = AwardManager.getAward(params)
+    if awardTask then
+        awardTask:process()
+    end
+    local tCheckparams = {
+        {
+            Type = CONDITION_TYPE.TASK,
+            DataIndex = 1,
+            DataValue = 4,
+            TaskId = rwtTaskData.task_44069,
+            compareType = COMPARE_TYPE.EQUAL
+        },
+    }
+    params.userId = nUserId
+    local result = ConditionManager.check(tCheckparams)
+    if result then
+        SysTalkForLua(1111111)
+        local params = {
+            AwardType = AWARD_TYPE.FUNCTION,
+            info = {
+                funcType = "addNPC",
+                npcid = 38002,
+                posX = 334,
+                posY = 310
+            }
+        }
+        params.roleId = nUserId
+        local awardTask = AwardManager.getAward(params)
+        if awardTask then
+            awardTask:process()
+        end
+    end
+end
+--endregion
+-- region 载具
+rwtCarryTypeCallBack[ud_nCarryId] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][1] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][1]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][1]["info"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][1]["info"]["funcType"]="addEffect"
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][1]["info"]["effectName"]="chaos_ap"
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["roleConverterChain"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["roleConverterChain"][1]={}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["roleConverterChain"][1]["type"]="get_target"
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["info"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["info"]["funcType"]="brocastMsg"
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["info"]["msgId"] = 2024
+rwtCarryTypeCallBack[ud_nCarryId]["AttachCarry"][1]["Awards"][2]["info"]["param"] = "上载具"
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][1] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][1]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][1]["info"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][1]["info"]["funcType"]="delEffect"
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][1]["info"]["effectName"]="chaos_ap"
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2] = {}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["roleConverterChain"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["roleConverterChain"][1]={}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["roleConverterChain"][1]["type"]="get_target"
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["info"]={}
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["info"]["funcType"]="brocastMsg"
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["info"]["msgId"] = 2024
+rwtCarryTypeCallBack[ud_nCarryId]["UnCarry"][1]["Awards"][2]["info"]["param"] = "下载具"
+-- endregion
+
+
+-- 任务面板，显示的是当前任务信息，数据结构是在描述在点击以后执行的操作
+rwtPostTaskGoOn[nPanelTask1] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Logic"] = "AND"
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1]["Type"] = CONDITION_TYPE.TIME
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1]["checkType"] = TIME_CHECK_TYPE.ACTIVITY
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1]["timeConfig"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1]["timeConfig"]["startTime"] = tActivityBeginTime
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][1]["timeConfig"]["endTime"] = tActivityEndTime
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][2] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][2]["Type"] = CONDITION_TYPE.PLAYER_ATTR
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][2]["attrType"] = PLAYER_ATTR_TYPE.MOTHERMAP
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][2]["targetValue"] = nMontherId
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Condition"]["Conditions"][2]["CompareType"] = COMPARE_TYPE.GREATER_EQUAL
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"]["info"]["funcType"] = "findWay"
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"]["info"]["posX"] = 127
+rwtPostTaskGoOn[nPanelTask1]["tNodes"][1]["Award"]["info"]["posY"] = 163
+
+rwtPostTaskGoOn[nPanelTask2] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["type"] = CONDITION_TYPE.PLAYER_ATTR
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["attrType"] = PLAYER_ATTR_TYPE.TASKDETAIL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["compareType"] = COMPARE_TYPE.EQUAL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["targetValue"] = 0
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["info"]["nTaskId"] = rwtTaskData.task_44070
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Condition"]["info"]["sParam"] = "percent"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"]["info"]["funcType"] = "brocastMsg"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"]["info"]["msgId"] = 2024
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][1]["Award"]["info"]["param"] = "随鼓点，击退哥布林，寻回恩护之鼓。"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["type"] = CONDITION_TYPE.PLAYER_ATTR
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["attrType"] = PLAYER_ATTR_TYPE.TASKDETAIL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["compareType"] = COMPARE_TYPE.EQUAL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["targetValue"] = 1
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["info"]["nTaskId"] = rwtTaskData.task_44070
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Condition"]["info"]["sParam"] = "percent"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"]["info"]["funcType"] = "findWay"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"]["info"]["posX"] = 85
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][2]["Award"]["info"]["posY"] = 50
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["type"] = CONDITION_TYPE.PLAYER_ATTR
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["attrType"] = PLAYER_ATTR_TYPE.TASKDETAIL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["compareType"] = COMPARE_TYPE.EQUAL
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["targetValue"] = 2
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["info"]["nTaskId"] = rwtTaskData.task_44070
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Condition"]["info"]["sParam"] = "percent"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"]["AwardType"] = AWARD_TYPE.FUNCTION
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"]["info"] = {}
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"]["info"]["funcType"] = "findWay"
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"]["info"]["posX"] = 82
+rwtPostTaskGoOn[nPanelTask2]["tNodes"][3]["Award"]["info"]["posY"] = 24
+
+--是否领奖了(鼓和宝箱)
+function fldn_2024Thanksgiving_CheckAward(nUserId)
+    if not rwSysUserTaskExist(nAwardTaskId,nUserId) then
+        return false
+    end
+    local nData1 = rwSysUserGetTaskValue(nAwardTaskId,"data1",nUserId)
+    local nData3 = rwSysUserGetTaskValue(nAwardTaskId,"data3",nUserId)
+    if nData1 < 1 then
+        return false
+    end
+    if nData3 < 1 then
+        return false
+    end
+    return true
+end
+
+--返回鸣天神庙遗址
+function fldn_2024Thanksgiving_BackToYiZhi(nUserId,nFlag)
+    local nFlag = nFlag or 0
+    if nFlag > 0 then
+        if not fldn_2024Thanksgiving_CheckAward(nUserId) then
+            rwSysNpcDialogText("你暂未领奖，是否确认要离去？")
+            rwSysNpcDialogOption("是。","</F>fldn_2024Thanksgiving_BackToYiZhi</N>"..nUserId.."</N>0")
+            rwSysNpcDialogOption("否。")
+            rwSysNpcDialogPic(10000)
+            rwSysNpcDialogEnd()
+            return
+        end
+    end
+    if fWqn_2024ThanksGiving_ReturnTemple and type(fWqn_2024ThanksGiving_ReturnTemple) == "function" then
+        fWqn_2024ThanksGiving_ReturnTemple(nUserId)
+    end
+end
+
+-- 副本基础配置
+rwtCopyMapData[1850] = {
+    nMapType = nMontherId,            --【必填】母本地图id
+    -- 创建副本条件
+    tBefore = {
+        tDetailTime={"2025-01-01 07:30","2025-12-29 23:59"}, -- 时间判断
+        nMinLevel = 90,           -- 最低等级
+        nMinGodLevel = 1,        -- 最低神等级
+        bHaveThirEud = true,    -- 是否三宠
+        nMapCount = 200,        --- 副本上限数量（不填默认200
+        tMapCheck = {           -- 地图检查
+            tInMapList = {1000, 12764, 602},    -- 允许进入副本的地图列表
+        },    },
+    --
+    tAfter = {
+        tMonster = {
+            --
+            {
+                tParam = {nPosX=9999, nPosY=9999, nGenId=0, nMonsterType=51919},                MapMaskIndex = 13,                   -- 创建时将怪物id保存到该副本掩码
+            },
+            ---第一波怪
+            {tParam = {nPosX=327, nPosY=308, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=327, nPosY=310, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=327, nPosY=306, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=301, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=298, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=296, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=294, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=292, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=321, nPosY=290, nGenId = 400012657, nMonsterType=1000}},
+            {tParam = {nPosX=332, nPosY=291, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=332, nPosY=289, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=120, nPosY=128, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=115, nPosY=127, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=115, nPosY=123, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=115, nPosY=131, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=109, nPosY=130, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=109, nPosY=122, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=109, nPosY=126, nGenId = 400012657, nMonsterType=2020}},
+            {tParam = {nPosX=82 , nPosY=89 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=86 , nPosY=89 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=90 , nPosY=89 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=94 , nPosY=89 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=82 , nPosY=84 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=86 , nPosY=84 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=90 , nPosY=84 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=94 , nPosY=84 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=82 , nPosY=79 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=86 , nPosY=79 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=94 , nPosY=79 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=90 , nPosY=79 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=82 , nPosY=74 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=86 , nPosY=74 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=90 , nPosY=74 , nGenId = 400012657, nMonsterType=1040}},
+            {tParam = {nPosX=94 , nPosY=74 , nGenId = 400012657, nMonsterType=1040}},
+        },        -- 副本创建成功时自动创建npc
+        tNpc = {            {
+                sParam = "起始路标 2 1 381440 0 0 %s 400 279 0 0 0 0 2100 38144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+            },
+            -- {
+            --     sParam = "入口传送 2 1 396490 0 0 %s 115 163 0 0 0 0 2100 39649 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+            -- },
+            {
+                sParam = "鼓 200 1 396517 0 0 %s 87 37 0 0 0 0 2100 39651 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+                MapMaskIndex = 18,                   -- 创建时将npcid保存到该副本掩码
+            },
+            {
+                sParam = "入口传送 148 1 298480 0 0 %s 137 168 0 0 0 0 2100 29848 0 0 0 0 0 0 600 0 0 0 0 8 8 0 0 8 0 0 0",
+            },
+        },        -- 副本创建成功时自动创建任务
+        tTask = {
+            rwtTaskData.task_44069
+        },
+        -- 镜头提高
+        tSetCameraScale = {
+            nScale = 100,
+            nSpeed = 1,
+            nAddValue = 100,
+        },
+        -- 将玩家ID保存到副本掩码
+        SaveUserIdMask = 11,
+        -- 副本创建成功后队长进本触发
+        fCopyMapInit = function(nCopyMapId, nUserId)            --创建增益buff
+            for k,tInfo in pairs(tPosInfoGroup["GainBuffPos"]) do
+                local nPosX,nPosY,nMonType,nBuffNameNpc,nLev,sTips = tInfo["nPosX"],tInfo["nPosY"],tInfo["nMonType"],tInfo["nBuffNameNpc"],tInfo["nLev"],tInfo["sTips"]
+                local nBuffMonId = rwSysMonsterCreate(nCopyMapId,nPosX,nPosY,0,nMonType)
+                local nBuffNpcId = rwSysNpcAddSingle("创建增益buff 200 1 " .. nBuffNameNpc*10 .. " 0 0 " .. nCopyMapId .. " " .. nPosX .. " " .. nPosY .. " 0 0 0 0 2100 " .. nBuffNameNpc .. " 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 12 0 0")
+
+                rwMonsterAI[nBuffMonId] = rwMonsterAI[nBuffMonId] or {}
+                rwMonsterAI[nBuffMonId]["nBuffNpcId"] = nBuffNpcId
+                rwMonsterAI[nBuffMonId]["nLev"] = nLev
+                rwMonsterAI[nBuffMonId]["sTips"] = sTips
+            end
+        end,
+    },
+    -- 离开副本后触发
+    tLeave = {
+        -- 离开副本前
+        fBeforeLeaveCustom = function(nMotherMapId, nUserId)
+            -- fldn_2024Thanksgiving_BackToYiZhi(nUserId,1)
+            return true
+        end,
+        -- 离开副本后触发
+        fLeaveCustom = function(nMotherMapId, nUserId)
+        end,
+
+        -- 恢复镜头
+        tSetCameraScale = {
+            nScale = 128,
+            nSpeed = 1,
+            nAddValue = 50,
+        },
+        -- 删除buff
+        tDelRoleStatus = {7044},
+        -- 下载具
+        tDelCarry = {
+            nCarryTypeId = 776,
+            sDelEffect = 'JumpKill_up_230',
+        },
+        -- 删除光效
+        tDelEffect = {
+            "winnerlight",
+            "JumpKill_up_230",
+        },
+        -- 删除任务
+        tDelTask = "44069 44070",
+    },
+}
+
+-- 进地图触发
+rwtEnterMap[nMontherId] = {}
+rwtEnterMap[nMontherId]["tNodes"] = {}
+rwtEnterMap[nMontherId]["tNodes"][1] = {}
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"] = {}
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"]["Type"]=CONDITION_TYPE.TIME
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"]["checkType"]=TIME_CHECK_TYPE.ACTIVITY
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"] = {}
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"]["startTime"] = tActivityBeginTime
+rwtEnterMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"]["endTime"] = tActivityEndTime
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"] = {}
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["info"]={}
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["info"]["funcType"]="SetCameraScale"
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["info"]["nScale"]=100
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["info"]["nSpeed"]=1
+rwtEnterMap[nMontherId]["tNodes"][1]["Award"]["info"]["nAddValue"]=100
+
+-- 离开地图触发
+rwtLeaveMap[nMontherId] = {}
+rwtLeaveMap[nMontherId]["tNodes"] = {}
+rwtLeaveMap[nMontherId]["tNodes"][1] = {}
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"] = {}
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"]["Type"]=CONDITION_TYPE.TIME
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"]["checkType"]=TIME_CHECK_TYPE.ACTIVITY
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"] = {}
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"]["startTime"] = tActivityBeginTime
+rwtLeaveMap[nMontherId]["tNodes"][1]["Condition"]["timeConfig"]["endTime"] = tActivityEndTime
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"] = {}
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["AwardType"]=AWARD_TYPE.FUNCTION
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["info"]={}
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["info"]["funcType"]="SetCameraScale"
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["info"]["nScale"]=100
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["info"]["nSpeed"]=1
+rwtLeaveMap[nMontherId]["tNodes"][1]["Award"]["info"]["nAddValue"]=100
+
+
+function test10011(nUserId,n)
+    -- local nCopyMapId = rwUserGetMapID(nUserId)
+
+    -- rwSysUserChgPoint(nUserId)
+     --删除地图
+    -- if rwSysMapChkUserNum(nCopyMapId, "map_user", "<=", 0) then
+    --  rwSysImmediatelyDelCopyMap323(nCopyMapId)
+    -- end
+        if n == 1 then
+            rwSysNoticeSetCameraScale(100,1,100,nUserId)
+        else
+            rwSysNoticeSetCameraScale(128,1,50,nUserId)
+        end
+    
+end
+
+function test10002(nUserId)
+    -- 进入副本参数
+    local sParam = "0 0 0 0 0 0 0 0 0 0 0 0 3600 1"
+
+    -- 开启副本
+    if rwCopyMap:create(1850):EnterCopyMap(nUserId, sParam, 0, 423, 269, 0) then
+        -- 开启副本成功
+    else
+        -- 开启副本失败
+    end
+end
+
+
+-- buff实例
+function test10001()
+    local nUserId = rwUserGetId()
+
+    -- 添加加速buff
+    local tAward = {
+        AwardType = AWARD_TYPE.BUFF,
+        info = {
+            targetType = BUFF_TARGET_TYPE.ADD_USER,
+            statusId = 397,
+            secs = 600,
+            saveType = SAVEBUFF_TYPE.OFFLINEDISAPPEAR,
+            power = 150,
+        }
+    }
+    -- 移除加速buff
+    -- local tAward = {
+    --     AwardType = AWARD_TYPE.BUFF,
+    --     info = {
+    --         targetType = BUFF_TARGET_TYPE.DEL_USER,
+    --         statusId = BUFF_TYPE.SPEED,
+    --     }
+    -- }
+
+    local award = AwardManager.getAward({
+        AwardType = tAward.AwardType,
+        info = tAward.info,
+        roleId = nUserId,
+    })
+    if award and award:check() then
+        return award:process()
+    end
+end
+</SampleCode>

@@ -18,15 +18,15 @@ class ChatModelFactory:
     }
 
     @classmethod
-    def get_model(cls, model_name: str, use_azure: bool = False):
-        if model_name == "DeepSeek" or model_name == "deepseek":
+    def get_model(cls, model_name: str, params = model_params,use_azure: bool = False):
+        if "deepseek" in model_name:
             # 开源模型替换
             # DeepSeek-V3-Base
             return ChatOpenAI(
-                model="DeepSeek",  # 模型名称
+                model= model_name,  # 模型名称
                 openai_api_key= deepseek_api_key,   # api key
                 openai_api_base= deepseek_api_url,  # 平台 API 地址
-                **cls.model_params,
+                **params,
             )
         elif "gpt" in model_name:
             if not use_azure:
@@ -40,7 +40,7 @@ class ChatModelFactory:
 
     @classmethod
     def get_default_model(cls):
-        return cls.get_model("DeepSeek")
+        return cls.get_model("deepseek-chat")
 
 
 class EmbeddingModelFactory:

@@ -3,3 +3,4 @@
 use_reflect = "no reflect"              #是否开启反思模块
 use_code_testing = "no code testing"    #是否开启代码测试模块
 max_iterations = 3                      #单步最大尝试次数
+max_tokens = 20000                      #最大token数

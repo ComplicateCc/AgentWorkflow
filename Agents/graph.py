@@ -13,7 +13,7 @@ workflow = StateGraph(State)
 workflow.add_node("参考代码查询模块", code_learning_part)
 workflow.add_node("代码生成模块", code_generation_part)
 workflow.add_node("代码测试模块", code_testing_part)
-workflow.add_node("代码验收模块", code_acceptance_part)
+# workflow.add_node("代码验收模块", code_acceptance_part)
 workflow.add_node("代码生成审查模块", code_generation_review_part)
 # workflow.add_node("记忆加载模块", memory_load_part)
 # workflow.add_node("记忆保存模块", memory_save_part)
@@ -28,16 +28,28 @@ workflow.add_conditional_edges(
     "代码生成审查模块",
     decide_to_finish,
     {
+        # "反思": "反思模块",
         "审核通过": "结束前模块",
-        "改进建议": "代码生成模块",
+        "代码改进": "代码生成模块",
     },
 )
 # workflow.add_edge("代码生成审查模块", "代码生成模块")
 workflow.add_edge("结束前模块", END)
 app = workflow.compile()
 
+solution = app.invoke({
+    "ori_prompt" : "",
+    "code_reference" : "",
+    "step_index" : 0,
+    "steps_msg" : [],
+    "steps_response" : [],
+    "review_result" : False,
+    "review_advice" : "",
+    "generated_code" : ""
+})
+
 # app.get_graph().draw_mermaid_png(output_file_path="1.png")
-print(app.get_graph())
+# print(app.get_graph())
 # 绘制流程图
 # from mermaid import Mermaid
 # Mermaid(app.get_graph().draw_mermaid())
