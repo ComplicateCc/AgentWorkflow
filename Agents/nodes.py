@@ -4,7 +4,7 @@ import sys
 sys.path.append('G:/Project/AgentWorkflow')
 from Models.Factory import ChatModelFactory
 from config import max_iterations, use_reflect, use_code_testing
-from schema import State, CodeGenerationResponse
+from schema import *
 from prompts import *
 import subprocess
 from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
@@ -89,7 +89,7 @@ function TaskSystem:ctor()
 end
 """
 def show_loading_message():
-    for message in itertools.cycle(["正在生成代码.", "正在生成代码..", "正在生成代码..."]):
+    for message in itertools.cycle(["正在生成代码.", "正在生成代码..", "正在生成代码...","正在生成代码....","正在生成代码.....","正在生成代码......"]):
         if not loading:
             break
         print(message, end='\r')
@@ -141,22 +141,25 @@ def code_generation_part(state):
     
     if review_result == "True" or review_result == True:
         prompt = code_regneration_prompt.format(ori_requirement=ori_prompt, generated_code=generated_code, review_advice=review_advice)
+        print("=====原代码=====")
+        print(generated_code)
         
-        code_regeneration_chain = llm.with_structured_output(CodeGenerationResponse, include_raw=False)
+        code_regeneration_chain = llm.with_structured_output(code_generation_model, include_raw=False)
         message = [
             HumanMessage(content=prompt)
         ]
         
-        # previous_output = ""
-        # for response in code_regeneration_chain.stream(message):
-        #     new_output = response.generated_code[len(previous_output):]
-        #     print(new_output, end='')  # 使用 end='' 确保不会重复打印换行符
-        #     previous_output = response.generated_code
+        #流式输出
+        previous_output = ""
+        for response in code_regeneration_chain.stream(message):
+            new_output = response.generated_code[len(previous_output):]
+            print(new_output, end='')  # 使用 end='' 确保不会重复打印换行符
+            previous_output = response.generated_code
         
         # llm生成代码
-        response = code_regeneration_chain.invoke(
-            message
-        )
+        # response = code_regeneration_chain.invoke(
+        #     message
+        # )
         print(response.generated_code)
         
         state["generated_code"] = response.generated_code
@@ -187,29 +190,29 @@ def code_generation_part(state):
     
     # 创建 LLMChain
     # code_generation_chain =  chat_prompt | llm.with_structured_output(CodeGenerationResponse, include_raw=False)
-    code_generation_chain = llm.with_structured_output(CodeGenerationResponse, include_raw=False)
+    code_generation_chain = llm.with_structured_output(code_generation_model, include_raw=False)
     
     message = [
         HumanMessage(content=prompt_template)
     ]
     
     # llm生成代码
-    response = code_generation_chain.invoke(
-        message
-    )
+    # response = code_generation_chain.invoke(
+    #     message
+    # )
     
     # # 停止加载提示
     # loading = False
     # loading_thread.join()
     
-    print(response.generated_code)
+    # print(response.generated_code)
     
     # 流式生成代码并打印 增量输出
-    # previous_output = ""
-    # for response in code_generation_chain.stream(message):
-    #     new_output = response.generated_code[len(previous_output):]
-    #     print(new_output, end='')  # 使用 end='' 确保不会重复打印换行符
-    #     previous_output = response.generated_code
+    previous_output = ""
+    for response in code_generation_chain.stream(message):
+        new_output = response.generated_code[len(previous_output):]
+        print(new_output, end='')  # 使用 end='' 确保不会重复打印换行符
+        previous_output = response.generated_code
     
     generated_code = response.generated_code
     # step_response.append(response)
