@@ -25,7 +25,14 @@ The autumn waters merge with the boundless sky in one hue.
 """
 
 input_content = """
-你好!~
+以你的经验  我想将LLM 和 Houdini相结合，在游戏行业方向
+能有什么好的创意或者发展方向呢
+"""
+
+problem1 = """
+J、O、I、N、T分别代表一个不同的数字，满足下面的等式：
+（J+O+I+N+T）*（J+O+I+N+T）*（J+O+I+N+T）=JOINT
+其中，JOINT代表一个五位数，问JOINT是多少？
 """
 
 client = OpenAI(api_key=api_key, base_url=api_url)
@@ -34,12 +41,13 @@ client = OpenAI(api_key=api_key, base_url=api_url)
 start_time = datetime.datetime.now()
 
 response = client.chat.completions.create(
-    model= "deepseek-chat",
+    model= "deepseek-reasoner",
     messages=[
-        {"role": "system", "content": "You are a helpful assistant"},
-        {"role": "user", "content": input_content},
+        {"role": "system", "content": "你是一个经验丰富的数学家，请用中文思考和输出。"},
+        {"role": "user", "content": problem1},
     ],
     stream=False
+    # stream=True
 )
 
 # 记录响应接收时间
@@ -51,8 +59,25 @@ time_interval = end_time - start_time
 # 打印响应时间间隔
 print("Response time interval:", time_interval)
 
+
+reasoning_content = ""
+content = ""
+
+# for chunk in response:
+#     if chunk.choices[0].delta.reasoning_content:
+#         reasoning_content += chunk.choices[0].delta.reasoning_content
+#         print("Reasoning_Content: " + reasoning_content)
+#     else:
+#         content += chunk.choices[0].delta.content
+#         print("Response:  " + content)
+
+
+# 打印思维链内容
+print("Reasoning_Content: " + response.choices[0].message.reasoning_content)
 # 打印响应内容
-print(response.choices[0].message.content)
+print("Response:  " + response.choices[0].message.content)
+
+
 
 # 打印 usage 中的 prompt_cache_hit_tokens 和 prompt_cache_miss_tokens
 usage = response.usage
