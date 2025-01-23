@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 import openai
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
-from langsmith.client import Client
 
 input_content1 = """
 评价下下面两个的翻译结果
