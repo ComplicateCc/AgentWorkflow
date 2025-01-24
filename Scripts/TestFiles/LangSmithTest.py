@@ -83,7 +83,7 @@ def pipeline(user_input: str):
     response = client.chat.completions.create(
         model="deepseek-reasoner",
         messages=[
-            {"role": "system", "content": "你是一个经验丰富的数学家，请用中文思考和输出。"},
+            {"role": "system", "content": "你是一个经验丰富的侦探，善于处理各种疑题，请用中文思考和输出。"},
             {"role": "user", "content": user_input},
         ],
         stream=False
@@ -112,9 +112,9 @@ def pipeline(user_input: str):
 
 
     # 打印思维链内容
-    print("Reasoning_Content: " + response.choices[0].message.reasoning_content)
+    print("=========思考内容=========\n" + response.choices[0].message.reasoning_content)
     # 打印响应内容
-    print("Response:  " + response.choices[0].message.content)
+    print("=========回答内容=========\n" + response.choices[0].message.content)
 
 
 
