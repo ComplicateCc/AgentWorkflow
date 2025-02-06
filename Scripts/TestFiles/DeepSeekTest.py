@@ -2,8 +2,10 @@
 
 import datetime
 import os
+import openai
 from openai import OpenAI
 from dotenv import load_dotenv
+from openai import APIError, Timeout, RateLimitError, AuthenticationError, OpenAIError
 
 # 加载.env文件中的环境变量
 load_dotenv()
@@ -55,9 +57,24 @@ problem4 = """
 你能帮我想想有什么好的方向吗？ 并以OKR的形式输出
 """
 
-problem = """
+problem5 = """
 我是一个游戏开发引擎开发工程师，在写年度OKR。我希望你帮忙写一些PCG相关的OKR。公司当前没有PCG相关基础，需要从0搭建。
 希望你写出一些有挑战性的OKR，一步一步的
+"""
+
+problem6 = """
+<使用AST解析器提取Shader关键数学函数>   其中AST解析器是什么？
+<开发DNN代理模型>   DNN代理模型是什么？
+<网络架构：采用SIREN网络（隐式神经表示）捕获高频细节>   获取的是什么信息？
+"""
+
+problem = """
+我希望用海螺AI生成一个高质量6s左右的AI视频  
+需求是：
+一个漂亮的女孩和一只纯白的中华田园猫在野外的互动  突出温馨、和谐
+帮忙润色一下，以达到高质量视频产出的目的，并加入运镜描述
+需要场景交互尽可能简单，渲染风格写实。
+尽可能简短的描述需求
 """
 
 client = OpenAI(api_key=api_key, base_url=api_url)
@@ -65,15 +82,34 @@ client = OpenAI(api_key=api_key, base_url=api_url)
 # 记录请求发送时间
 start_time = datetime.datetime.now()
 
-response = client.chat.completions.create(
-    model= "deepseek-reasoner",
-    messages=[
-        # {"role": "system", "content": "你是一个经验丰富的数学家，请用中文思考和输出。"},
-        {"role": "user", "content": problem},
-    ],
-    stream=False
-    # stream=True
-)
+response = None  # 确保 response 变量在异常情况下也被定义
+
+try:
+    response = client.chat.completions.create(
+        model="deepseek-reasoner",
+        messages=[
+            # {"role": "system", "content": "你是一个经验丰富的数学家，请用中文思考和输出。"},
+            {"role": "user", "content": problem},
+        ],
+        stream=False,
+        timeout=300  # 设置超时时间为300秒
+    )
+    # 打印原始响应内容
+    print("Raw response:", response)
+except Timeout as e:
+    print(f"Request timed out: {e}")
+except APIError as e:
+    print(f"API 服务端出现错误: {e}")
+except RateLimitError as e:
+    print(f"请求频率超出速率限制: {e}")
+except AuthenticationError as e:
+    print(f"认证错误: {e}")
+except OpenAIError as e:
+    # 捕获其他 OpenAI 相关的错误
+    print(f"发生了 OpenAI 错误: {e}")
+except Exception as e:
+    # 捕获其他未知错误
+    print(f"发生了未知错误: {e}")
 
 # 记录响应接收时间
 end_time = datetime.datetime.now()
@@ -85,8 +121,8 @@ time_interval = end_time - start_time
 print("Response time interval:", time_interval)
 
 
-reasoning_content = ""
-content = ""
+# reasoning_content = ""
+# content = ""
 
 # for chunk in response:
 #     if chunk.choices[0].delta.reasoning_content:
@@ -97,21 +133,20 @@ content = ""
 #         print("Response:  " + content)
 
 
-# 打印思维链内容
-print("Reasoning_Content: " + response.choices[0].message.reasoning_content)
-# 打印响应内容
-print("Response:  " + response.choices[0].message.content)
+if response:
+    # 打印思维链内容
+    print("Reasoning_Content: " + response.choices[0].message.reasoning_content)
+    # 打印响应内容
+    print("Response:  " + response.choices[0].message.content)
 
-
-
-# 打印 usage 中的 prompt_cache_hit_tokens 和 prompt_cache_miss_tokens
-usage = response.usage
-if usage:
-    print("Completion tokens:", usage.completion_tokens)
-    print("Prompt tokens:", usage.prompt_tokens)
-    print("Total tokens:", usage.total_tokens)
-    if usage.model_extra:
-        print("Prompt cache hit tokens:", usage.model_extra['prompt_cache_hit_tokens'])
-        print("Prompt cache miss tokens:", usage.model_extra['prompt_cache_miss_tokens'])
+    # 打印 usage 中的 prompt_cache_hit_tokens 和 prompt_cache_miss_tokens
+    usage = response.usage
+    if usage:
+        print("Completion tokens:", usage.completion_tokens)
+        print("Prompt tokens:", usage.prompt_tokens)
+        print("Total tokens:", usage.total_tokens)
+        if usage.model_extra:
+            print("Prompt cache hit tokens:", usage.model_extra['prompt_cache_hit_tokens'])
+            print("Prompt cache miss tokens:", usage.model_extra['prompt_cache_miss_tokens'])
 else:
-    print("No usage information available.")
+    print("response is None!!!")
