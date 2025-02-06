@@ -196,14 +196,14 @@ def encode_image(image_path):
     return base64.b64encode(image_file.read()).decode('utf-8')
 
 # 需要传给大模型的图片
-image_path = r"G:\Project\AgentWorkflow\Scripts\TestFiles\test2.png"
+image_path = r"G:\Project\AgentWorkflow\Scripts\TestFiles\Test_Image.png"
 image_path3 = r"G:\Project\AgentWorkflow\Scripts\TestFiles\test3.jpeg"
 
 image_url = r"https://img0.baidu.com/it/u=1723120327,1267441483&fm=253&fmt=auto&app=138&f=JPEG?w=864&h=486"
 image_url2 = r"https://pics2.baidu.com/feed/b03533fa828ba61e6584d8147ee5170e314e59fc.jpeg?token=44bb54bfcba7607dd1c2fadeb08ee67b&s=F1950B74A6B56D8A4AFE71C2030030B9"
 
 # 将图片转为Base64编码
-base64_image = encode_image(image_path3)
+base64_image = encode_image(image_path)
 
 # # 展示图片
 # img = Image.open(image_path)
@@ -220,7 +220,8 @@ response = client.chat.completions.create(
       "content": [
         {
           "type": "text",
-          "text": "请尝试解决图片中的问题。think step by step. 验证问题的每一个答案，找到最合适的答案。",
+          # "text": "请尝试解决图片中的问题。think step by step. 验证问题的每一个答案，找到最合适的答案。",
+          "text": "描述一下图片的内容，并告诉我图片中的角色是谁",
         },
         {
           "type": "image_url",
