@@ -1,0 +1,40 @@
+@startuml
+
+package "Agents" {
+    class Workflow {
+        +add_node(name: str, part: Part)
+        +set_entry_point(name: str)
+        +add_edge(from: str, to: str)
+        +add_conditional_edges(from: str, to: str, conditions: dict)
+    }
+
+    class Part {
+        <<abstract>>
+    }
+
+    class PlanningPart extends Part
+    class CodeLearningPart extends Part
+    class CodeGenerationPart extends Part
+    class CodeTestingPart extends Part
+    class CodeAcceptancePart extends Part
+    class CodeGenerationReviewPart extends Part
+    class MemoryLoadPart extends Part
+    class MemorySavePart extends Part
+    class MemoryRetrievePart extends Part
+    class DecideToFinish extends Part
+    class PreEndPart extends Part
+
+    Workflow --> PlanningPart
+    Workflow --> CodeLearningPart
+    Workflow --> CodeGenerationPart
+    Workflow --> CodeTestingPart
+    Workflow --> CodeAcceptancePart
+    Workflow --> CodeGenerationReviewPart
+    Workflow --> MemoryLoadPart
+    Workflow --> MemorySavePart
+    Workflow --> MemoryRetrievePart
+    Workflow --> DecideToFinish
+    Workflow --> PreEndPart
+}
+
+@enduml
