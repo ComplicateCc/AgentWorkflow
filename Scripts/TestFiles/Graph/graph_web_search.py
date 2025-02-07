@@ -26,7 +26,6 @@ os.environ['LANGCHAIN_ENDPOINT'] = "https://api.smith.langchain.com"
 os.environ['LANGCHAIN_PROJECT'] = "Test_Graph_Web_Search"
 
 
-
 class BBox(TypedDict):
     x: float
     y: float
@@ -243,6 +242,48 @@ print("==============prompt==============")
 print(prompt)
 print("==============end==============")
 
+
+# 更新中文系统提示词
+system_prompt = """
+想象你是一个像人类一样浏览网页的机器人。现在你需要完成一个任务。在每次迭代中，你会收到一个包含网页截图和一些文本的观察结果。这个截图会在每个网页元素的左上角标注数字标签。仔细分析视觉信息以识别需要交互的网页元素对应的数字标签，然后按照以下指南选择一个动作：
+
+1. 点击网页元素
+2. 删除文本框中的现有内容并输入新内容
+3. 向上或向下滚动
+4. 等待
+5. 返回
+7. 返回谷歌重新开始
+8. 回答最终答案
+
+相应地，动作必须严格遵循以下格式：
+
+- Click [数字标签]
+- Type [数字标签]; [内容]
+- Scroll [数字标签或WINDOW]; [up或down]
+- Wait
+- GoBack
+- Google
+- ANSWER; [内容]
+
+你必须遵循的关键指南：
+
+*动作指南*
+1) 每次迭代只执行一个动作
+2) 点击或输入时，确保选择正确的边界框
+3) 数字标签位于对应边界框的左上角，颜色相同
+
+*网页浏览指南*
+1) 不要与网页中出现的无用网页元素（如登录、注册、捐赠等）交互
+2) 战略性地选择以减少浪费的时间
+
+你的回复必须严格遵循以下格式：
+
+想法：{你的简要想法（简要总结有助于得出答案的信息）}
+动作：{你选择的一个动作格式}
+然后用户将提供：
+观察：{用户提供的带标签的截图}
+"""
+
 from dotenv import load_dotenv
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
@@ -250,8 +291,13 @@ from langsmith import traceable
 # 加载.env文件中的环境变量
 load_dotenv()
 
-api_key = os.getenv('Deepseek_API_Key')
-api_url = os.getenv('Deepseek_API_URL')
+# api_key = os.getenv('Deepseek_API_Key')
+# api_url = os.getenv('Deepseek_API_URL')
+
+api_key = os.getenv('Doubao_API_Key')
+api_url = os.getenv('Doubao_API_URL')
+
+model_name = 'ep-20250124142348-md7td'
 
 ##临时设置环境变量
 ###LANGCHAIN_TRACING_V2是设置LangChain是否开启日志跟踪模式。
@@ -265,7 +311,7 @@ os.environ['LANGCHAIN_PROJECT'] = "test_web_search"
 import json
 import openai
 
-llm = ChatOpenAI(model="deepseek-chat", 
+llm = ChatOpenAI(model=model_name, 
                  api_key=api_key, 
                  base_url=api_url,
                  max_tokens = 4096)
@@ -275,6 +321,10 @@ llm = ChatOpenAI(model="deepseek-chat",
 # )
 
 try:
+    
+    # 确保 prompt 内容是字符串
+    prompt_text = str(prompt)
+    
     # Assuming `format_descriptions`, `prompt`, `llm`, `StrOutputParser`, and `parse` are defined elsewhere
     agent = annotate | RunnablePassthrough.assign(
         prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
@@ -283,7 +333,7 @@ try:
     # Debugging: Print the JSON body
     json_body = {
         "format_descriptions": format_descriptions,
-        "prompt": prompt,
+        "prompt": system_prompt,
         "llm": llm,
         "StrOutputParser": StrOutputParser(),
         "parse": parse
