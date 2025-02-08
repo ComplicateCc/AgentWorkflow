@@ -1,23 +1,16 @@
-# %pip install --upgrade --quiet  playwright > /dev/null
-# !playwright install
-
 from typing import List, Optional
 from typing_extensions import TypedDict
 
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage, AIMessage
 from playwright.async_api import Page
-
-from langchain_core.messages import HumanMessage, SystemMessage  # 导入消息类型
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate # 导入模板
-from langchain_core.prompts.image import ImagePromptTemplate
 
 import os
 from dotenv import load_dotenv
 # 加载.env文件中的环境变量
 load_dotenv()
 
-api_key = os.getenv('Deepseek_API_Key')
-api_url = os.getenv('Deepseek_API_URL')
+# api_key = os.getenv('Deepseek_API_Key')  # 调试时可以先注释掉，用假的key
+# api_url = os.getenv('Deepseek_API_URL')
 lanchain_api = os.getenv('LANGCHAIN_API_KEY')
 
 ##临时设置环境变量
@@ -198,13 +191,13 @@ async def mark_page(page):
 
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, AIMessagePromptTemplate
 
 
 async def annotate(state):
     marked_page = await mark_page.with_retry().ainvoke(state["page"])
-    # print(f"Marked page: {marked_page}")
     return {**state, **marked_page}
 
 
@@ -240,48 +233,49 @@ def parse(text: str) -> dict:
     return {"action": action, "args": action_input}
 
 
-# Will need a later version of langchain to pull
-# this image prompt template
-# prompt = hub.pull("wfh/web-voyager")
+# 更新中文系统提示词 (只保留任务描述，移除输出格式)
+system_prompt = """
+想象你是一个像人类一样浏览网页的机器人。现在你需要完成一个任务。在每次迭代中，你会收到一个包含网页截图和一些文本的观察结果。这个截图会在每个网页元素的左上角标注数字标签。仔细分析视觉信息以识别需要交互的网页元素对应的数字标签，然后按照以下指南选择一个动作：
 
+- Click [数字标签]
+- Type [数字标签]; [内容]
+- Scroll [数字标签或WINDOW]; [up或down]
+- Wait
+- GoBack
+- Google
+- ANSWER; [内容]
+
+你必须遵循的关键指南：
+
+*动作指南*
+1) 每次迭代只执行一个动作
+2) 点击或输入时，确保选择正确的边界框
+3) 数字标签位于对应边界框的左上角，颜色相同
+
+*网页浏览指南*
+1) 不要与网页中出现的无用网页元素（如登录、注册、捐赠等）交互
+2) 战略性地选择以减少浪费的时间
+"""
+
+# 输出格式指导 (作为 AI 消息)
+output_format_instruction = AIMessagePromptTemplate.from_template(
+    """
+    你的回复必须严格遵循以下格式：
+
+    想法：{你的简要想法（简要总结有助于得出答案的信息）}
+    动作：{你选择的一个动作格式}
+    """
+)
+
+
+# 创建一个 ChatPromptTemplate 对象 (正确版本)
 prompt = ChatPromptTemplate.from_messages(
     [
-        # 系统消息模板
-        SystemMessagePromptTemplate(
-            prompt=[PromptTemplate(
-                input_variables=[],
-                input_types={},
-                partial_variables={},
-                template="Imagine you are a robot browsing the web, just like humans. Now you need to complete a task. In each iteration, you will receive an Observation that includes a screenshot of a webpage and some texts. This screenshot will\nfeature Numerical Labels placed in the TOP LEFT corner of each Web Element. Carefully analyze the visual\ninformation to identify the Numerical Label corresponding to the Web Element that requires interaction, then follow\nthe guidelines and choose one of the following actions:\n\n1. Click a Web Element.\n2. Delete existing content in a textbox and then type content.\n3. Scroll up or down.\n4. Wait \n5. Go back\n7. Return to google to start over.\n8. Respond with the final answer\n\nCorrespondingly, Action should STRICTLY follow the format:\n\n- Click [Numerical_Label] \n- Type [Numerical_Label]; [Content] \n- Scroll [Numerical_Label or WINDOW]; [up or down] \n- Wait \n- GoBack\n- Google\n- ANSWER; [content]\n\nKey Guidelines You MUST follow:\n\n* Action guidelines \n1) Execute only one action per iteration.\n2) When clicking or typing, ensure to select the correct bounding box.\n3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.\n\n Web Browsing Guidelines *\n1) Don't interact with useless web elements like Login, Sign - in, donation that appear in Webpages\n2) Select strategically to minimize time wasted.\n\nYour reply should strictly follow the format:\n\nThought: {{Your brief thoughts (briefly summarize the info that will help ANSWER)}}\nAction: {{One Action format you choose}}\nThen the User will provide:\nObservation: {{A labeled screenshot Given by User}}\n"
-            )],
-            additional_kwargs={}
-        ),
-        
-        MessagesPlaceholder(variable_name='scratchpad', optional=True),
-        
-        HumanMessagePromptTemplate(
-            prompt=[
-                ImagePromptTemplate(
-                    input_variables=['img'],
-                    input_types={},
-                    partial_variables={},
-                    template={'url': 'data:image/png;base64,{img}'}
-                ),
-                PromptTemplate(
-                    input_variables=['bbox_descriptions'],
-                    input_types={},
-                    partial_variables={},
-                    template='{bbox_descriptions}'
-                ),
-                PromptTemplate(
-                    input_variables=['input'],
-                    input_types={},
-                    partial_variables={},
-                    template='{input}'
-                )
-            ],
-            additional_kwargs={}
-        ),
+        ("system", system_prompt),  # 系统提示 (只包含任务描述)
+        MessagesPlaceholder(variable_name="bbox_descriptions"),  # 边界框描述 (可变)
+        MessagesPlaceholder(variable_name="scratchpad"),         # 对话历史 (可变)
+        ("user", "{input}"),                                     # 用户输入 (可变)
+        output_format_instruction,                               # 输出格式指导
     ]
 )
 
@@ -291,9 +285,6 @@ from langsmith import traceable
 
 # 加载.env文件中的环境变量
 load_dotenv()
-
-# api_key = os.getenv('Deepseek_API_Key')
-# api_url = os.getenv('Deepseek_API_URL')
 
 api_key = os.getenv('Doubao_API_Key')
 api_url = os.getenv('Doubao_API_URL')
@@ -317,32 +308,11 @@ llm = ChatOpenAI(model=model_name,
                  base_url=api_url,
                  max_tokens = 4096)
 
-# agent = annotate | RunnablePassthrough.assign(
-#     prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
-# )
 
-try:
-    # Assuming `format_descriptions`, `prompt`, `llm`, `StrOutputParser`, and `parse` are defined elsewhere
-    agent = annotate | RunnablePassthrough.assign(
-        prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
-    )
-    
-    # Debugging: Print the JSON body
-    json_body = {
-        "format_descriptions": format_descriptions,
-        "prompt": prompt,
-        "llm": llm,
-        "StrOutputParser": StrOutputParser(),
-        "parse": parse
-    }
-    print("JSON Body:", json.dumps(json_body, indent=2))
-
-except openai.UnprocessableEntityError as e:
-    print("UnprocessableEntityError:", e)
-    print("Error details:", e.json_body)
-except Exception as e:
-    print("An unexpected error occurred:", e)
-
+# 修正 agent 定义 (移到 graph_builder 之前, 并将 annotate 和 format_descriptions 包装成 RunnableLambda)
+agent = RunnableLambda(annotate) | RunnableLambda(format_descriptions) | RunnablePassthrough.assign(
+    prediction= prompt | llm | StrOutputParser() | parse
+)
 
 import re
 
@@ -361,7 +331,6 @@ def update_scratchpad(state: AgentState):
 
     return {**state, "scratchpad": [SystemMessage(content=txt)]}
 
-from langchain_core.runnables import RunnableLambda
 
 from langgraph.graph import END, START, StateGraph
 
@@ -374,24 +343,39 @@ graph_builder.add_edge(START, "agent")
 graph_builder.add_node("update_scratchpad", update_scratchpad)
 graph_builder.add_edge("update_scratchpad", "agent")
 
+# tools = {
+#     "Click": click,  # 不要在这里包装成 RunnableLambda
+#     "Type": type_text,
+#     "Scroll": scroll,
+#     "Wait": wait,
+#     "GoBack": go_back,
+#     "Google": to_google,
+# }
+
+# for node_name, tool in tools.items():
+#     graph_builder.add_node(
+#         node_name,
+#         # The lambda ensures the function's string output is mapped to the "observation"
+#         # key in the AgentState
+#         RunnableLambda(tool) | (lambda observation: {"observation": observation}),
+#     )
+#     # Always return to the agent (by means of the update-scratchpad node)
+#     graph_builder.add_edge(node_name, "update_scratchpad")
+    
 tools = {
-    "Click": click,
-    "Type": type_text,
-    "Scroll": scroll,
-    "Wait": wait,
-    "GoBack": go_back,
-    "Google": to_google,
+    "Click": RunnableLambda(click),  # 在这里包装成 RunnableLambda
+    "Type": RunnableLambda(type_text),
+    "Scroll": RunnableLambda(scroll),
+    "Wait": RunnableLambda(wait),
+    "GoBack": RunnableLambda(go_back),
+    "Google": RunnableLambda(to_google),
 }
-
-
+# 遍历创建tools节点
 for node_name, tool in tools.items():
     graph_builder.add_node(
         node_name,
-        # The lambda ensures the function's string output is mapped to the "observation"
-        # key in the AgentState
-        RunnableLambda(tool) | (lambda observation: {"observation": observation}),
+        tool | (lambda observation: {"observation": observation}), #这里已经包装成runnable了
     )
-    # Always return to the agent (by means of the update-scratchpad node)
     graph_builder.add_edge(node_name, "update_scratchpad")
 
 
@@ -444,13 +428,21 @@ async def call_agent(question: str, page, max_steps: int = 150):
     return final_answer
 
 async def main():
-    browser = await async_playwright().start()
-    # We will set headless=False so we can watch the agent navigate the web.
-    browser = await browser.chromium.launch(headless=False, args=None)
-    page = await browser.new_page()
-    _ = await page.goto("https://www.google.com")
+    print("Starting browser...")  # 调试信息
+    browser = None # 初始化browser
+    try:
+        browser = await async_playwright().start()
+        # We will set headless=False so we can watch the agent navigate the web.
+        browser = await browser.chromium.launch(headless=False)
+        page = await browser.new_page()
+        await page.goto("https://www.google.com")
 
-    res = await call_agent("你可以告诉我去华宝花园怎么走吗？公交方案", page)
-    print(f"Final response: {res}")
+        res = await call_agent("你可以告诉我去华宝花园怎么走吗？公交方案", page, max_steps=500) # 增加max_steps
+        print(f"Final response: {res}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+            if browser:
+                await browser.close()
 
 asyncio.run(main())
