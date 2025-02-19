@@ -208,17 +208,6 @@ async def annotate(state):
     return {**state, **marked_page}
 
 
-# def format_descriptions(state):
-#     labels = []
-#     for i, bbox in enumerate(state["bboxes"]):
-#         text = bbox.get("ariaLabel") or ""
-#         if not text.strip():
-#             text = bbox["text"]
-#         el_type = bbox.get("type")
-#         labels.append(f'{i} (<{el_type}/>): "{text}"')
-#     bbox_descriptions = "\nValid Bounding Boxes:\n" + "\n".join(labels)
-#     return {**state, "bbox_descriptions": [SystemMessage(content=bbox_descriptions)]}
-# 修改后（返回纯文本）
 def format_descriptions(state):
     labels = []
     for i, bbox in enumerate(state["bboxes"]):
@@ -228,7 +217,8 @@ def format_descriptions(state):
         el_type = bbox.get("type")
         labels.append(f'{i} (<{el_type}/>): "{text}"')
     bbox_descriptions = "\nValid Bounding Boxes:\n" + "\n".join(labels)
-    return {**state, "bbox_descriptions": bbox_descriptions}  # 返回字符串
+    return {**state, "bbox_descriptions": bbox_descriptions}
+
 
 def parse(text: str) -> dict:
     action_prefix = "Action: "
@@ -254,33 +244,44 @@ def parse(text: str) -> dict:
 # this image prompt template
 # prompt = hub.pull("wfh/web-voyager")
 
-system_prompt = "Imagine you are a robot browsing the web, just like humans. Now you need to complete a task. In each iteration, you will receive an Observation that includes a screenshot of a webpage and some texts. This screenshot will\nfeature Numerical Labels placed in the TOP LEFT corner of each Web Element. Carefully analyze the visual\ninformation to identify the Numerical Label corresponding to the Web Element that requires interaction, then follow\nthe guidelines and choose one of the following actions:\n\n1. Click a Web Element.\n2. Delete existing content in a textbox and then type content.\n3. Scroll up or down.\n4. Wait \n5. Go back\n7. Return to google to start over.\n8. Respond with the final answer\n\nCorrespondingly, Action should STRICTLY follow the format:\n\n- Click [Numerical_Label] \n- Type [Numerical_Label]; [Content] \n- Scroll [Numerical_Label or WINDOW]; [up or down] \n- Wait \n- GoBack\n- Google\n- ANSWER; [content]\n\nKey Guidelines You MUST follow:\n\n* Action guidelines \n1) Execute only one action per iteration.\n2) When clicking or typing, ensure to select the correct bounding box.\n3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.\n\n Web Browsing Guidelines *\n1) Don't interact with useless web elements like Login, Sign - in, donation that appear in Webpages\n2) Select strategically to minimize time wasted.\n\nYour reply should strictly follow the format:\n\nThought: {{Your brief thoughts (briefly summarize the info that will help ANSWER)}}\nAction: {{One Action format you choose}}\nThen the User will provide:\nObservation: {{A labeled screenshot Given by User}}\n"
-
 prompt = ChatPromptTemplate.from_messages(
     [
-        # 系统消息（纯文本）
-        SystemMessage(
-            content=system_prompt
+        # 系统消息模板
+        SystemMessagePromptTemplate(
+            prompt=[PromptTemplate(
+                input_variables=[],
+                input_types={},
+                partial_variables={},
+                template="Imagine you are a robot browsing the web, just like humans. Now you need to complete a task. In each iteration, you will receive an Observation that includes a screenshot of a webpage and some texts. This screenshot will\nfeature Numerical Labels placed in the TOP LEFT corner of each Web Element. Carefully analyze the visual\ninformation to identify the Numerical Label corresponding to the Web Element that requires interaction, then follow\nthe guidelines and choose one of the following actions:\n\n1. Click a Web Element.\n2. Delete existing content in a textbox and then type content.\n3. Scroll up or down.\n4. Wait \n5. Go back\n7. Return to google to start over.\n8. Respond with the final answer\n\nCorrespondingly, Action should STRICTLY follow the format:\n\n- Click [Numerical_Label] \n- Type [Numerical_Label]; [Content] \n- Scroll [Numerical_Label or WINDOW]; [up or down] \n- Wait \n- GoBack\n- Google\n- ANSWER; [content]\n\nKey Guidelines You MUST follow:\n\n* Action guidelines \n1) Execute only one action per iteration.\n2) When clicking or typing, ensure to select the correct bounding box.\n3) Numeric labels lie in the top-left corner of their corresponding bounding boxes and are colored the same.\n\n Web Browsing Guidelines *\n1) Don't interact with useless web elements like Login, Sign - in, donation that appear in Webpages\n2) Select strategically to minimize time wasted.\n\nYour reply should strictly follow the format:\n\nThought: {{Your brief thoughts (briefly summarize the info that will help ANSWER)}}\nAction: {{One Action format you choose}}\nThen the User will provide:\nObservation: {{A labeled screenshot Given by User}}\n"
+            )],
+            additional_kwargs={}
         ),
         
-        # 历史消息占位符
         MessagesPlaceholder(variable_name='scratchpad', optional=True),
         
-        # 人类消息（多模态）
-        HumanMessage(
-            content=[
-                {
-                    "type": "text", 
-                    "text": "Bounding Boxes:\n{bbox_descriptions}\n\nUser Input:\n{input}"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "data:image/png;base64,{img}"  # 确保变量已正确格式化
-                    }
-                }
-            ]
-        )
+        HumanMessagePromptTemplate(
+            prompt=[
+                ImagePromptTemplate(
+                    input_variables=['img'],
+                    input_types={},
+                    partial_variables={},
+                    template={'url': 'data:image/png;base64,{img}'}
+                ),
+                PromptTemplate(
+                    input_variables=['bbox_descriptions'],
+                    input_types={},
+                    partial_variables={},
+                    template='{bbox_descriptions}'
+                ),
+                PromptTemplate(
+                    input_variables=['input'],
+                    input_types={},
+                    partial_variables={},
+                    template='{input}'
+                )
+            ],
+            additional_kwargs={}
+        ),
     ]
 )
 
@@ -326,15 +327,15 @@ try:
         prediction=format_descriptions | prompt | llm | StrOutputParser() | parse
     )
     
-    # # Debugging: Print the JSON body
-    # json_body = {
-    #     "format_descriptions": format_descriptions,
-    #     "prompt": prompt,
-    #     "llm": llm,
-    #     "StrOutputParser": StrOutputParser(),
-    #     "parse": parse
-    # }
-    # print("JSON Body:", json.dumps(json_body, indent=2))
+    # Debugging: Print the JSON body
+    json_body = {
+        "format_descriptions": format_descriptions,
+        "prompt": prompt,
+        "llm": llm,
+        "StrOutputParser": StrOutputParser(),
+        "parse": parse
+    }
+    print("JSON Body:", json.dumps(json_body, indent=2))
 
 except openai.UnprocessableEntityError as e:
     print("UnprocessableEntityError:", e)
@@ -414,9 +415,6 @@ from IPython import display
 from playwright.async_api import async_playwright
 
 async def call_agent(question: str, page, max_steps: int = 150):
-    
-    display.display(display.Image(base64.b64decode(event["agent"]["img"])))
-    
     event_stream = graph.astream(
         {
             "page": page,
