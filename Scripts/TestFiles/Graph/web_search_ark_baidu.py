@@ -117,8 +117,8 @@ class WebSearchTool:
             await state.page.go_back()
             return f"Navigated back to {state.page.url}."
         elif action == "Search":
-            await state.page.goto("https://www.google.com/")
-            return "Navigated to google.com."
+            await state.page.goto("https://www.baidu.com/")
+            return "Navigated to baidu.com."
         return f"Unknown or invalid action: {action}"
 
     async def search(self, query: str, max_steps: int = 10) -> str:
@@ -126,7 +126,7 @@ class WebSearchTool:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
-            await page.goto("https://www.google.com")
+            await page.goto("https://www.baidu.com")
             
             state = AgentState(page, query)
             step = 0
