@@ -126,6 +126,8 @@ class WebSearchTool:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
+            # 设置浏览器窗口大小
+            await page.set_viewport_size({"width": 960, "height": 500})
             await page.goto("https://www.baidu.com")
             
             state = AgentState(page, query)
@@ -146,10 +148,11 @@ class WebSearchTool:
                 # 调用模型获取下一步动作
                 response = self.client.chat.completions.create(
                     model=self.model_name,
+                    temperature = 0.0,
                     messages=[
                         {
                             "role": "system",
-                            "content": "你是一个像人类一样浏览网页的机器人。分析截图中的数字标签，选择合适的动作。\n\n你必须严格按照以下格式输出：\n想法：[简要描述你的分析和决策]\nAction: [动作] [参数1]; [参数2]\n\n可用的动作格式：\n- Click [数字标签]\n- Type [数字标签]; [内容]\n- Scroll [数字标签或WINDOW]; [up或down]\n- Wait\n- GoBack\n- Search\n- ANSWER [内容]\n\n示例输出：\n想法：我看到搜索框，需要输入查询内容\nAction: Type 4; 搜索内容"
+                            "content": "你是一个像人类一样浏览网页的机器人。分析截图中的数字标签，选择合适的动作。\n\n每次只能输出一个Action。你必须找到用户提出所有问题的准确答案才可以输出ANSWER。你必须严格按照以下格式输出：\n想法：[简要描述你的分析和决策]\nAction: [动作] [参数1]; [参数2]\n\n可用的动作格式：\n- Click [数字标签]\n- Type [数字标签]; [内容]\n- Scroll [数字标签或WINDOW]; [up或down]\n- Wait\n- GoBack\n- Search\n- ANSWER [内容]\n\n示例输出：\n想法：我看到搜索框，需要输入查询内容\nAction: Type 4; 搜索内容"
                         },
                         {
                             "role": "user",
@@ -193,6 +196,8 @@ class WebSearchTool:
                     await browser.close()
                     return prediction["args"][0] if prediction["args"] else "No answer provided."
                 
+                print("observation :" + prediction["action"] + " " + str(prediction["args"]))
+
                 # 执行动作
                 observation = await self._execute_action(state, prediction["action"], prediction["args"] or [])
                 state.scratchpad.append(f"{step + 1}. {prediction['action']}: {prediction['args']} -> {observation}")
@@ -203,7 +208,7 @@ class WebSearchTool:
 
 async def main():
     tool = WebSearchTool()
-    result = await tool.search("RTX国行 5090D什么时候发售？")
+    result = await tool.search("哪吒二2月21日最新的票房是多少？距离世界影史第一还差多少？")
     print(f"Final response: {result}")
 
 if __name__ == "__main__":

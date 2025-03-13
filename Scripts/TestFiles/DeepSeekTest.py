@@ -10,9 +10,12 @@ from openai import APIError, Timeout, RateLimitError, AuthenticationError, OpenA
 # 加载.env文件中的环境变量
 load_dotenv()
 
-api_key = os.getenv('Deepseek_API_Key')
-api_url = os.getenv('Deepseek_API_URL')
+# api_key = os.getenv('Deepseek_API_Key')
+# api_url = os.getenv('Deepseek_API_URL')
 
+
+api_key = os.getenv('SILICONFLOW_API_KEY')
+api_url = os.getenv('SILICONFLOW_API_URL')
 # api_key = ""
 # api_url = "http://localhost:11434/api/chat"
 # api_url = "http://192.168.218.85:11434/api/generate"
@@ -81,9 +84,9 @@ response = None  # 确保 response 变量在异常情况下也被定义
 
 try:
     response = client.chat.completions.create(
-        model="deepseek-reasoner",
+        # model="deepseek-reasoner",
+        model= "Pro/deepseek-ai/DeepSeek-V3",
         messages=[
-            # {"role": "system", "content": "你是一个经验丰富的数学家，请用中文思考和输出。"},
             {"role": "user", "content": problem},
         ],
         stream=False,

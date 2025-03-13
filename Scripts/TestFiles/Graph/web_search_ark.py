@@ -42,8 +42,11 @@ class WebSearchTool:
 
     async def _mark_page(self, page: Page, debug_mark : bool = False):
         
-        # while debug_mark:
-        #     await asyncio.sleep(3)
+        # 等待页面加载完成
+        try:
+            await page.wait_for_load_state('networkidle')
+        except Exception:
+            await asyncio.sleep(3)
         
         await page.evaluate(self.mark_page_script)
         bboxes = []
@@ -149,7 +152,7 @@ class WebSearchTool:
                     messages=[
                         {
                             "role": "system",
-                            "content": "你是一个像人类一样浏览网页的机器人。分析截图中的数字标签，选择合适的动作。\n\n你必须严格按照以下格式输出：\n想法：[简要描述你的分析和决策]\nAction: [动作] [参数1]; [参数2]\n\n可用的动作格式：\n- Click [数字标签]\n- Type [数字标签]; [内容]\n- Scroll [数字标签或WINDOW]; [up或down]\n- Wait\n- GoBack\n- Search\n- ANSWER [内容]\n\n示例输出：\n想法：我看到搜索框，需要输入查询内容\nAction: Type 4; 搜索内容"
+                            "content": "你是一个像人类一样浏览网页的机器人。分析截图中的数字标签，选择合适的动作。\n\n每次只输出一个Action。你必须严格按照以下格式输出：\n想法：[简要描述你的分析和决策]\nAction: [动作] [参数1]; [参数2]\n\n可用的动作格式：\n- Click [数字标签]\n- Type [数字标签]; [内容]\n- Scroll [数字标签或WINDOW]; [up或down]\n- Wait\n- GoBack\n- Search\n- ANSWER [内容]\n\n示例输出：\n想法：我看到搜索框，需要输入查询内容\nAction: Type 4; 搜索内容"
                         },
                         {
                             "role": "user",
@@ -192,6 +195,8 @@ class WebSearchTool:
                 if prediction["action"] == "ANSWER":
                     await browser.close()
                     return prediction["args"][0] if prediction["args"] else "No answer provided."
+                
+                print("observation :" + prediction["action"] + " " + str(prediction["args"]))
                 
                 # 执行动作
                 observation = await self._execute_action(state, prediction["action"], prediction["args"] or [])

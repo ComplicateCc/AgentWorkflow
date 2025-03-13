@@ -22,8 +22,14 @@ let labels = [];
 
 function unmarkPage() {
   // Unmark page logic
+  if (!labels || !Array.isArray(labels)) {
+    labels = [];
+    return;
+  }
   for (const label of labels) {
-    document.body.removeChild(label);
+    if (label && label.parentNode) {
+      document.body.removeChild(label);
+    }
   }
   labels = [];
 }
